@@ -1,0 +1,834 @@
+
+module builtin
+
+fn (char c) is_digit() bool {
+	return c >= `0` && c <= `9`
+}
+
+fn (char c) is_letter() bool {
+	return (c >= `a` && c <= `z`) || (c >= `A` && c <= `Z`)
+}
+
+bool char::is_white() {
+	i := int(_)
+	return i == 9 || i == 10 || i == 13 || i == 32 || _ == `\r`
+}
+
+// char* 转换成 string
+fn tos(char* s, int len) string {
+	if isnil(s) {
+		return string{}
+	}
+	return string {
+		str: s
+		len: len
+	}
+}
+
+// char* => string
+string c2s(char* s) { // new_string
+	if isnil(s) {
+		return string{}
+	}
+	//int len = C.strlen(s)
+	return string {
+		str: s
+		len: C.strlen(s)
+	}
+	
+}
+
+
+// 生成字符串, 并复制
+fn tos_clone(char* s) string {
+	if isnil(s) {
+		return string{}
+	}
+	var res = string {
+		str: s
+		len: strlen(s)
+	}
+	return res.clone()
+}
+
+class string { // 16字节
+	char* 	str
+	int 	len
+	//int hash_cache 
+}
+
+class ustring { // 88字节
+let:
+	string s
+	[]int runes
+	int len
+}
+
+fn C.strlen() int
+
+fn todo() { } 
+
+
+// 复制字符串
+fn (string a) clone() string {
+	var b = string {
+		len: a.len
+		str: malloc(a.len + 1)
+	}
+	for i = 0; i < a.len; i++ {
+		b[i] = a[i]
+	}
+	b[a.len] = `\0`
+	return b
+}
+
+// 返回 c 字符串
+fn (string s) cstr() char* {
+	c := s.clone()
+	return c.str
+}
+
+// 代替
+fn (string s) replace(string rep, with) string {
+	if s.len == 0 || rep.len == 0 {
+		return s
+	}
+
+	var idxs = []int//{}
+	var rem = s
+	var rstart = 0
+	for {
+		var i = rem.index(rep)
+		if i < 0 {break}
+		idxs << rstart + i
+		i += rep.len
+		rstart += i
+		rem = rem.substr(i, rem.len)
+	} 
+	if idxs.len == 0 {
+		return s
+	} 
+	new_len := s.len + idxs.len * (with.len - rep.len)
+	var b = malloc(new_len + 1)  
+	var idx_pos = 0
+	var cur_idx = idxs[idx_pos]
+	var b_i = 0
+	for i = 0; i < s.len; i++ { 
+		if i == cur_idx {
+			for j = 0; j < with.len; j++ {
+				b[b_i] = with[j]
+				b_i++
+			} 
+			i += rep.len - 1 
+			idx_pos++
+			if idx_pos < idxs.len {
+				cur_idx = idxs[idx_pos]
+			}
+		} 
+		else {
+			b[b_i] = s[i]
+			b_i++
+		}
+	}
+	b[new_len] = `\0`
+	return tos(b, new_len)
+}
+
+// 字符串转数字
+fn (string s) int() int {
+	return C.atoi(s.str)
+}
+
+fn (string s) i64() i64 {
+	return C.atoll(s.str)
+}
+
+fn (string s) f32() f32 {
+	return C.atof(s.str)
+}
+
+// ==
+[private]
+fn (string s) eq(string a) bool {
+	
+	if isnil(s.str) {
+		//panic('string.eq(): nil string')
+	}
+	if s.len != a.len {
+		return false
+	}
+	for i = 0; i < s.len; i++ {
+		if s[i] != a[i] {
+			return false
+		}
+	}
+	return true
+}
+
+// !=
+[private]
+fn (string s) ne(string a) bool {
+	return !s.eq(a)
+}
+
+// s < a
+[private]
+fn (string s) lt(string a) bool {
+	for i = 0; i < s.len; i++ {
+		if i >= a.len || s[i] > a[i] {
+			return false
+		}
+		else if s[i] < a[i] {
+			return true
+		}
+	}
+	if s.len < a.len {
+		return true
+	}
+	return false
+}
+
+// s <= a
+[private]
+fn (string s) le(string a) bool {
+	return s.lt(a) || s.eq(a)
+}
+
+// s > a
+[private]
+fn (string s) gt(string a) bool {
+	return !s.le(a)
+}
+
+// s >= a
+[private]
+fn (string s) ge(string a) bool {
+	return !s.lt(a)
+}
+
+// + 字符串相加
+fn (string s) add(string a) string {
+	new_len := s.len + a.len
+	var res = string {
+		len: new_len
+		str: malloc(new_len + 1)
+	}
+	for j = 0; j < s.len; j++ {
+		res[j] = s[j]
+	}
+	for j = 0; j < a.len; j++ {
+		res[s.len + j] = a[j]
+	}
+	res[new_len] = `\0`
+	return res
+}
+
+// 切片
+fn (string s) split(string delim) []string {
+	// println('string split delim="$delim" s="$s"')
+	var res = []string
+	if delim.len == 0 {
+		res << s
+		return res
+	}
+	if delim.len == 1 {
+		return s.split_single(delim[0])
+		// println('split 1 only')
+		// os.exit()
+	}
+	var i = 0
+	var start = 0// - 1
+	for i < s.len { 
+		var a = s[i] == delim[0]
+		var j = 1
+		for j < delim.len && a {
+			a = a && s[i + j] == delim[j]
+			j++
+		}
+		last := i == s.len - 1
+		if a || last {
+			if last {
+				i++
+			}
+			var val = s.substr(start, i) 
+			if val.len > 0 { 
+				if val.starts_with(delim) { 
+					val = val.right(delim.len)
+				}
+				res << val.trim_space()
+			}
+			start = i
+		}
+		i++
+	}
+	return res
+}
+
+// 切片
+fn (string s) split_single(char delim) []string {
+	var res = []string
+	if int(delim) == 0 {
+		res << s
+		return res
+	}
+	var i = 0
+	var start = 0
+	for i < s.len {
+		a := s[i] == delim
+		b := i == s.len - 1
+		if a || b {
+			if i == s.len - 1 {
+				i++
+			}
+			val := s.substr(start, i)
+			if val.len > 0 {
+				res << val.trim_space()
+			}
+			start = i + 1
+		}
+		i++
+	}
+	return res
+}
+
+// 以 \n 切片
+fn (string s) split_into_lines() []string {
+	var res = []string
+	if s.len == 0 {
+		return res
+	}
+	var start = 0
+	for i = 0; i < s.len; i++ {
+		last := i == s.len - 1
+		if int(s[i]) == 10 || last {
+			if last {
+				i++
+			}
+			line := s.substr(start, i)
+			res << line
+			start = i + 1
+		}
+	}
+	return res
+}
+
+// 'hello'.left(2) => 'he'
+fn (string s) left(int n) string {
+	if n >= s.len {
+		return s
+	}
+	return s.substr(0, n)
+}
+
+// 'hello'.right(2) => 'llo'
+fn (string s) right(int n) string {
+	if n >= s.len {
+		return ''
+	}
+	return s.substr(n, s.len)
+}
+
+// 'privet'.substr(1, 4)  => 'riv'
+fn (string s) substr(int start, end) string {
+if start >= s.len {
+		return ''
+	}
+	len := end - start
+	res := string {
+		str: s.str + start
+		len: len
+	}
+	return res
+}
+
+//----------------------------------------------
+// 开始位置
+fn (string s) index(string p) int {
+	if p.len > s.len {
+		return -1
+	} 
+	var j = 0
+
+	for i = 0; i < s.len; i++ {
+		if p[j] != s[i] {
+			j = 0
+		}
+		if p[j] == s[i] {
+			j++
+		}
+		if j == p.len {
+			return i - p.len + 1
+		}
+	} 
+	return -1
+}
+
+// 从后往前搜索 , 开始位置
+fn (string s) last_index(string p) int {
+	if p.len > s.len {
+		return -1
+	}
+	var i = s.len - p.len
+	for i >= 0 {
+		var j = 0
+		for j < p.len && s[i + j] == p[j] {
+			j++
+		}
+		if j == p.len {
+			return i
+		}
+		i--
+	}
+	return -1
+}
+
+// 从前往后 , ( 字符 , 开始位置)
+fn (string s) index_after(string p, int start) int {
+	if p.len > s.len {
+		return -1
+	}
+	var strt = start
+	if start < 0 {
+		strt = 0
+	}
+	if start >= s.len {
+		return -1
+	}
+	var i = strt
+
+	for i < s.len {
+		var j = 0
+
+		for j < p.len && s[i + j] == p[j] {
+			j++
+		}
+		if j == p.len {
+			return i
+		}
+		i++
+	}
+	
+	return -1
+}
+
+//---------------  ----------------------------------------------------
+// first
+//从0开始, 之前 
+fn (string s) all_before(string dot) string {
+	pos := s.index(dot)
+	if pos == -1 {
+		return s
+	}
+	return s.left(pos)
+}
+
+//--------------- first ----------------------------------------------------
+
+// 第一个前面
+fn (string s) first_before(string dot) string {
+	pos := s.index(dot)
+	if pos == -1 {
+		return s
+	}
+	return s.left(pos)
+}
+
+//从0开始, 第一个后面
+fn (string s) first_after (string dot) string {
+	pos := s.index(dot)
+	if pos == -1 {
+		return s
+	}
+	return s.right(pos + dot.len - 1)
+}
+
+//--------------- last ----------------------------------------------------
+// 从后往前搜索, 之前
+fn (string s) last_before(string dot) string {
+	pos := s.last_index(dot)
+	if pos == -1 {
+		return s
+	}
+	return s.left(pos)
+}
+
+// 从后往前搜索, 之后
+fn (string s) last_after(string dot) string {
+	pos := s.last_index(dot)
+	if pos == -1 {
+		return s
+	}
+	var po = pos + dot.len
+	return s.right(po)
+}
+//---------------  ----------------------------------------------------
+//准备弃用
+
+// 从后往前搜索, 之后
+fn (string s) all_after(string dot) string {
+	pos := s.last_index(dot)
+	if pos == -1 {
+		return s
+	}
+	return s.right(pos + dot.len)
+}
+
+//---------------  ----------------------------------------------------
+
+fn (string s) contains(string p) bool {
+	res := s.index(p) > 0 - 1
+	return res
+}
+
+fn (string s) starts_with(string p) bool {
+	res := s.index(p) == 0
+	return res
+}
+
+fn (string s) ends_with(string p) bool {
+	if p.len > s.len {
+		return false
+	}
+	res := s.last_index(p) == s.len - p.len
+	return res
+}
+
+fn (string s) to_lower() string {
+	var b = malloc(s.len)// TODO + 1 ??
+	for i = 0; i < s.len; i++ {
+		b[i] = C.tolower(s.str[i])
+	}
+	return tos(b, s.len)
+}
+
+fn (string s) to_upper() string {
+	var b = malloc(s.len)// TODO + 1 ??
+	for i = 0; i < s.len; i++ {
+		b[i] = C.toupper(s.str[i])
+	}
+	return tos(b, s.len)
+}
+
+// 'hey [man] how you doin'.find_between('[', ']') == 'man'
+fn (string s) find_between(string start, end) string {
+	start_pos := s.index(start)
+	if start_pos == -1 {
+		return ''
+	}
+	
+	val := s.right(start_pos + start.len)
+	end_pos := val.index(end)
+	if end_pos == -1 {
+		return val
+	}
+	return val.left(end_pos)
+}
+
+fn ([]string ar) contains(string val) bool {
+	for s in ar {
+		if s == val {
+			return true
+		}
+	}
+	return false
+}
+
+fn ([]int ar) contains(int val) bool {
+	for i, s in ar {
+		if s == val {
+			return true
+		}
+	}
+	return false
+}
+
+/*
+fn ([]string a) to_c() void* {
+	char ** res = malloc(sizeof(char*) * a.len);
+	for i = 0; i < a.len; i++ {
+		val := a[i]
+		# res[i] = val.str;
+	}
+	return res;
+	return 0
+}
+*/
+
+[private]
+fn is_space(char c) bool {
+	return C.isspace(c)
+}
+
+fn (char c) is_space() bool {
+	return is_space(c)
+}
+
+fn (string s) trim_space() string {
+	if s == '' {
+		return ''
+	}
+	// println('TRIM SPACE "$s"')
+	var i = 0
+	for i < s.len && is_space(s[i]) {
+		i++
+	}
+	var res = s.right(i)
+	var end = res.len - 1
+	for end >= 0 && is_space(res[end]) {
+		// C.printf('end=%d c=%d %c\n', end, res.str[end])
+		end--
+	}
+	res = res.left(end + 1)
+	// println('after SPACE "$res"')
+	return res
+}
+
+// 修剪
+fn (string s) trim(char c) string {
+	if s == '' {
+		return ''
+	}
+	var i = 0
+	for i < s.len && c == s[i] {
+		i++
+	}
+	
+	var res = s.right(i)
+	var end = res.len - 1
+	for end >= 0 && c == res[end] {
+		end--
+	}
+	res = res.left(end + 1)
+	return res
+}
+
+// 剪掉左面
+fn (string s) trim_left(string cutset) string {
+	var start = s.index(cutset)
+	if start == 0 {
+		return s
+	}
+	return s.right(start)
+}
+
+// 剪掉右面
+fn (string s) trim_right(string cutset) string {
+	pos := s.last_index(cutset)
+	if pos == -1 {
+		return s
+	}
+	return s.left(pos)
+}
+
+// fn print_cur_thread() {
+// //C.printf("tid = %08x \n", pthread_self());
+// }
+
+//--------------- 排序 ----------------------------------------------------
+[private]
+fn compare_strings(string* a, b) int {
+	if a.lt(b) {
+		return -1
+	}
+	if a.gt(b) {
+		return 1
+	}
+	return 0
+}
+
+[private]
+fn compare_strings_by_len(string* a, b) int {
+	if a.len < b.len {
+		return -1
+	}
+	if a.len > b.len {
+		return 1
+	}
+	return 0
+}
+
+fn compare_lower_strings(string* a, b) int {
+	aa := a.to_lower()
+	bb := b.to_lower()
+	return compare_strings(aa, bb)
+}
+
+// 排序
+fn ([]string *s) sort() {
+	s.sort_with_compare(compare_strings)
+}
+
+fn ([]string *s) sort_ignore_case() {
+	s.sort_with_compare(compare_lower_strings)
+}
+
+fn ([]string *s) sort_by_len() {
+	s.sort_with_compare(compare_strings_by_len)
+}
+//---------------< 排序 <----------------------------------------------------
+
+
+fn (string s) ustring() ustring {
+	var res = ustring {
+		s: s 
+		runes: new_array(0, s.len, sizeof(int))
+	}
+	for i = 0; i < s.len; i++ {
+		char_len := utf8_char_len(s.str[i])
+		res.runes << i
+		i += char_len - 1
+		res.len++
+	}
+	return res
+}
+
+global g_ustring_runes []int
+
+fn (string s) ustring_tmp() ustring {
+	var res = ustring {
+		s: s
+	}
+	res.runes = g_ustring_runes
+	res.runes.len = s.len
+	var j = 0
+	for i = 0; i < s.len; i++ {
+		char_len := utf8_char_len(s.str[i])
+		res.runes[j] = i
+		j++
+		i += char_len - 1
+		res.len++
+	}
+	return res
+}
+
+fn (ustring u) substr(int start, end) string {
+	start = u.runes[start]
+	if end >= u.runes.len {
+		end = u.s.len
+	}
+	else {
+		end = u.runes[end]
+	}
+	return u.s.substr(start, end)
+}
+
+fn (ustring u) left(int pos) string {
+	return u.substr(0, pos)
+}
+
+fn (ustring u) right(int pos) string {
+	return u.substr(pos, u.len)
+}
+
+[private]
+fn (string s) at(int idx) char {
+	if (idx) < 0 || (idx) >= s.len {
+		//panic('字符串索引超出范围: ${s.len} \ $idx')
+		error('字符串索引超出范围: ${s.len} \ $idx')
+	}
+	return s.str[idx]
+}
+
+fn (ustring u) at(int idx) string {
+	return u.substr(idx, idx + 1)
+}
+
+[private]
+fn (ustring u) free() {
+	u.runes.free()
+}
+
+[private]
+fn abs(int a) int {
+	if a >= 0 {
+		return a
+	}
+	return -a
+}
+
+fn (string s) free() {
+	C.free(s.str)
+}
+
+[private]
+fn ([]string arr) free() {
+	for s in arr {
+		s.free()
+	}
+	C.free(arr.data)
+}
+
+
+
+// fn (s []string) substr(int a, b) string {
+// return join_strings(s.slice_fast(a, b))
+// }
+
+fn ([]string a) join(string del) string {
+	if a.len == 0 {
+		return ''
+	}
+	var len = 0
+	for i, val in a {
+		len += val.len + del.len
+	}
+	len -= del.len
+	// Allocate enough memory
+	var res = ''
+	res.len = len
+	res.str = malloc(res.len + 1)
+	var idx = 0
+	// Go thru every string and copy its every char one by one
+	for i, val in a {
+		for j = 0; j < val.len; j++ {
+			c := val[j]
+			res.str[idx] = val.str[j]
+			idx++
+		}
+		// Add del if it's not last
+		if i != a.len - 1 {
+			for k = 0; k < del.len; k++ {
+				res.str[idx] = del.str[k]
+				idx++
+			}
+		}
+	}
+	res.str[res.len] = `\0`
+	return res
+}
+
+fn ([]string s) join_lines() string {
+	return s.join('\n')
+}
+
+fn (string s) reverse() string {
+	var res = string {
+		len: s.len
+		str: malloc(s.len)
+	}
+
+	for i = s.len - 1; i >= 0; i-- {
+        res[s.len-i-1] = s[i]
+	}
+
+	return res
+}
+
+// 'hello'.limit(2) => 'he'
+// 'hi'.limit(10) => 'hi'
+fn (string s) limit(int max) string {
+	u := s.ustring()
+	if u.len <= max {
+		return s
+	}
+	return u.substr(0, max)
+}
+
+array_char string::bytes() {
+	if _.len == 0 {
+		return []char
+	}
+	var buf = [char(0); _.len]
+	C.memcpy(buf.data, _.str, _.len)
+	return buf
+}

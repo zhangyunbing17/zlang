@@ -1,0 +1,37 @@
+
+module strings 
+
+class Builder {
+pri:
+	[]char 	buf 
+	int 	len 
+}
+
+fn new_builder(int initial_size) Builder {
+	return Builder { 
+		buf: new_array(0, initial_size, sizeof(char))
+	}
+}
+
+fn (Builder *b) write(string s) {
+	b.buf.push_many(s.str, s.len) 
+	b.len += s.len
+}
+
+fn (Builder *b) writeln(string s) {
+	b.buf.push_many(s.str, s.len) 
+	b.buf << `\n`
+	b.len += s.len + 1
+}
+
+fn (Builder b) str() string {
+	return tos(b.buf.data, b.len)
+}
+
+fn (Builder b) cut(int n) {
+	b.len -= n
+}
+
+fn (Builder *b) free() {
+	C.free(b.buf.data)
+}

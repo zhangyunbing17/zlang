@@ -1,0 +1,319 @@
+
+module glfw
+
+#flag -I @VROOT/thirdparty/glfw 
+#flag -L @VROOT/thirdparty/glfw 
+
+// Debugging a custom build
+//-#flag darwin -L/var/tmp/glfw/src/
+
+#flag darwin -lglfw
+#flag linux -lglfw
+#flag windows -lglfw3 
+#include <GLFW/glfw3.h>
+// #flag darwin -framework Carbon
+// #flag darwin -framework Cocoa
+// #flag darwin -framework CoreVideo
+// #flag darwin -framework IOKit
+const (
+	RESIZABLE = 1
+	DECORATED = 2
+)
+
+import const (
+	GLFW_RESIZABLE
+	GLFW_DECORATED
+	GLFW_FLOATING 
+)
+
+import const (
+	GLFW_KEY_ENTER
+	GLFW_KEY_A
+	GLFW_KEY_B
+	GLFW_KEY_P
+	GLFW_KEY_F
+	GLFW_KEY_M
+	GLFW_KEY_L
+	GLFW_KEY_V
+	GLFW_KEY_R
+	GLFW_KEY_D
+	GLFW_KEY_7
+	GLFW_KEY_Z
+	GLFW_KEY_UP
+	GLFW_KEY_DOWN
+	GLFW_KEY_UP
+	GLFW_KEY_LEFT
+	GLFW_KEY_RIGHT
+	GLFW_KEY_BACKSPACE
+	GLFW_KEY_ENTER
+	GLFW_KEY_ESCAPE
+	GLFW_KEY_N
+	GLFW_KEY_PERIOD
+	GLFW_KEY_SLASH
+	GLFW_KEY_F5
+	GLFW_KEY_F6
+	GLFW_KEY_MINUS
+	GLFW_KEY_EQUAL
+	GLFW_KEY_C
+	GLFW_KEY_G
+	GLFW_KEY_I
+	GLFW_KEY_J
+	GLFW_KEY_E
+	GLFW_KEY_K
+	GLFW_KEY_O
+	GLFW_KEY_T
+	GLFW_KEY_H
+	GLFW_KEY_L
+	GLFW_KEY_N
+	GLFW_KEY_U
+	GLFW_KEY_X
+	GLFW_KEY_W
+	GLFW_KEY_Y
+	GLFW_KEY_Q
+	GLFW_KEY_RIGHT_BRACKET
+	GLFW_KEY_LEFT_BRACKET
+	GLFW_KEY_8
+	GLFW_KEY_TAB
+	GLFW_KEY_COMMA
+	GLFW_KEY_QUESTION
+)
+
+const (
+	KEY_ESCAPE     = 256
+	KEY_LEFT_SUPER = 343
+)
+
+const (
+	KeyUp    = 265
+	KeyLeft  = 263
+	KeyRight = 262
+	KeyDown  = 264
+)
+
+// TODO COPY PASTA
+class WinCfg {
+	int width  
+	int height  
+	string title 
+	*void ptr 
+	bool borderless 
+	int is_modal 
+	bool is_browser 
+	string url 
+	bool always_on_top 
+}
+
+// data  *C.GLFWwindow
+// TODO change data to cobj
+class Window {
+	*void data 
+	string title 
+	int mx 
+	int my 
+}
+
+class Size {
+//pub:
+	int width  
+	int height 
+}
+
+class Pos {
+	int x 
+	int y 
+}
+
+// type clickpub fn fn (GLFWwindow* window, int button, action, mods)
+type clickpubfn fn (void* window, int button, action, mods)
+//type clickpubfn fn (voidptr window, int button, action, mods)
+
+fn init() {
+	C.glfwInit()
+	# glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+	# glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+	# glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+	# glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+}
+
+fn (Window & w) destroy() {
+	C.glfwDestroyWindow(w.data)
+}
+
+fn terminate() {
+	C.glfwTerminate()
+}
+
+// fn mouse_move(GLFWwindow* w, double x, y) {
+fn mouse_move(void* w, f64 x, y) {
+	// #printf("%f : %f => %d \n", x,y);
+}
+
+// fn create_window(string title, int w, h) * Window {
+fn window_hint(int key, val) {
+	C.glfwWindowHint(key, val)
+}
+
+fn create_window(WinCfg c) *Window {
+	// TODO why i need this in stdlib? extern?
+	// # if (!gconst_init)   {  init_consts(); gconst_init = 1; }
+	// ChatsRepo
+	if c.borderless {
+		window_hint(GLFW_RESIZABLE, 0)
+		window_hint(GLFW_DECORATED, 0)
+	}
+	if c.always_on_top {
+		window_hint(GLFW_FLOATING, 1) 
+ 
+	} 
+	cwindow := C.glfwCreateWindow(c.width, c.height, c.title.str, 0, 0)
+	# if (!cwindow)
+	// if cwindow == 0
+	{
+		println('failed to credate glfw  window')
+		C.glfwTerminate()
+	}
+	// # glfwSetCursorPosCallback(cwindow, glfw__mouse_move) ;
+	// C.glfwSetCursorPosCallback(cwindow, mouse_move)
+	C.printf('create window wnd=%p ptr==%p\n', cwindow, c.ptr)
+	C.glfwSetWindowUserPointer(cwindow, c.ptr)
+	// # void *a =glfwGetWindowUserPointer(cwindow);
+	// # printf("aaaaaa=%p d=%d\n", a,a);
+	window := &Window {
+		data: cwindow,
+		title: c.title,
+	}
+	// user_ptr: ptr,
+	// repo: repo,
+	// for !C.glfwWindowShouldClose(cwindow) {
+	// C.glfwPollEvents()
+	// wait_events()
+	// }
+	// C.glfwTerminate()
+	return window
+}
+
+fn (Window & w) set_title(string title) {
+	C.glfwSetWindowTitle(w.data, title.str)
+}
+
+fn (Window & w) make_context_current() {
+	// ChatsRepo
+	kkk := 0
+	// println('making context current' )
+	C.glfwMakeContextCurrent(w.data)
+}
+
+fn swap_interval(int interval) {
+	C.glfwSwapInterval(interval)
+}
+
+fn wait_events() {
+	C.glfwWaitEvents()
+}
+
+fn poll_events() {
+	C.glfwPollEvents()
+}
+
+fn set_should_close(void* w, bool close) {
+	C.glfwSetWindowShouldClose(w, close)
+}
+
+fn (Window & w) should_close() bool {
+	// ChatsRepo
+	return C.glfwWindowShouldClose(w.data)
+}
+
+fn (Window & w) swap_buffers() {
+	C.glfwSwapBuffers(w.data)
+}
+
+fn (Window *w) onmousemove(void* cb) {
+	C.glfwSetCursorPosCallback(w.data, cb)
+}
+
+fn (Window *w) set_mouse_button_callback(void* cb) {
+	C.glfwSetMouseButtonCallback(w.data, cb)
+}
+
+fn (Window *w) on_click(void* cb) {
+	C.glfwSetMouseButtonCallback(w.data, cb)
+}
+
+fn (Window & w) set_scroll_callback(void* cb) {
+	C.glfwSetScrollCallback(w.data, cb)
+}
+
+fn (Window & w) on_scroll(void* cb) {
+	C.glfwSetScrollCallback(w.data, cb)
+}
+
+fn post_empty_event() {
+	C.glfwPostEmptyEvent()
+}
+
+fn (Window *w) onkeydown(void* cb) {
+	C.glfwSetKeyCallback(w.data, cb)
+}
+
+fn (Window *w) onchar(void* cb) {
+	C.glfwSetCharModsCallback(w.data, cb)
+}
+
+fn get_time() f64 {
+	return C.glfwGetTime()
+}
+
+fn key_pressed(void* wnd , int key) bool {
+	# return glfwGetKey(wnd, key) == GLFW_PRESS;
+	return false
+}
+
+fn (Window *w) get_clipboard_text() string {
+	return string(*char(C.glfwGetClipboardString(w.data)))
+}
+
+fn (Window & w) set_clipboard_text(string s) {
+	C.glfwSetClipboardString(w.data, s.str)
+}
+
+fn (Window & w) get_cursor_pos() Pos {
+	x := f64(0)
+	y := f64(0)
+	C.glfwGetCursorPos(w.data, &x, &y)
+	return Pos {
+		x: int(x)
+		y: int(y)
+	}
+}
+
+fn (Window & w) user_ptr() void* {
+	return C.glfwGetWindowUserPointer(w.data)
+}
+
+fn (Window & w) set_user_ptr(void* ptr) {
+	C.glfwSetWindowUserPointer(w.data, ptr)
+}
+
+fn C.glfwGetVideoMode() C.GLFWvideoMode
+
+fn get_monitor_size() Size {
+	# GLFWvidmode* mode = glfwGetVideoMode(glfwGetPrimaryMonitor());
+	// window_width = mode->width;
+	// window_height = mode->height;
+	// monitor := C.glfwGetPrimaryMonitor()
+	res := Size{}
+	# res.width=mode->width;
+	# res.height=mode->height;
+	// C.glfwGetMonitorPhysicalSize(monitor, &res.width, &res.height)
+	return res
+}
+
+fn (Size size) str() string {
+	return '{$size.width, $size.height}'
+}
+
+fn get_window_user_pointer(void* gwnd) void* {
+	return C.glfwGetWindowUserPointer(gwnd)
+}
+

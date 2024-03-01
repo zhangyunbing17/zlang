@@ -1,0 +1,159 @@
+
+module builtin
+
+class map {
+	[]Entry entries      
+	int 	size  
+	
+	int 	cap 
+	string  elm_type
+	int 	elm_size  // element
+ 
+}
+
+// 登记
+class Entry {
+	string 	key 
+	void* 	val 
+}
+
+//[private]
+map map:new(int cap, elm_size, char* elm) {
+	res := map {
+		elm_type: c2s(elm)
+		elm_size: elm_size
+	}
+	return res
+}
+
+map new_map1(int cap, elm_size, string elm) {
+	res := map {
+		elm_type: elm
+		elm_size: elm_size
+	}
+	return res
+}
+
+[private]
+Entry map:new_entry(string key , void* val ) {
+	_new := Entry {
+		key: key
+		val: malloc(_.elm_size) // 分配
+	}
+	C.memcpy(_new.val, val, _.elm_size) // 复制到 _.val 中
+	return _new
+}
+
+[private]
+void map:set(string key , void* val ) {
+	db := _.new_entry(key, val)
+	
+	// 设置
+	for i = 0; i < _.entries.len; i++ {
+		entry := _.entries[i]
+		if entry.key == key {
+			//db := Entry{key: key, val: val} 
+			_.entries[i] = db
+			return
+		}
+	}
+	
+	// 追加
+	_.entries << db // _.new_entry(key, val) 
+}
+
+/*
+ bool map_get(map self, string key, void* out) { //fn
+    for (int i=0;i < self.entries.len;i++ ) { 
+        Entry entry=( *(Entry*) array__get(self.entries,i) ) ;
+        if (string_eq(entry.key, key) ) {
+            memcpy(out, entry.val, self.elm_size) ;
+            return 1 ;
+         }
+         
+     }
+    return 0 ;
+ }
+*/
+bool map::get(string key , void* out ) {
+	
+	for i = 0; i < _.entries.len; i++ {
+		entry := _.entries[i]
+		if entry.key == key {
+			C.memcpy(out, entry.val, _.elm_size)
+			return true
+		}
+	}
+	return false
+}
+
+array_string map:keys() {
+	var keys = []string
+	for i = 0; i < _.entries.len; i++ {
+		entry := _.entries[i]
+		keys << entry.key
+	}
+	return keys
+}
+
+//[private]
+bool map::exists(string key ) {
+	for i = 0; i < _.entries.len; i++ {
+		entry := _.entries[i]
+		if entry.key == key {
+			return true
+		}
+	}
+	return false
+}
+
+//[private]
+void map::println() {
+	println('<<<<<<<<')
+	for i = 0; i < _.entries.len; i++ {
+		entry := _.entries[i]
+		println('$entry.key => $entry.val')
+	}
+
+	println('>>>>>>>>>>')
+}
+
+void map::free() {
+	// C.free(_.table)
+	// C.free(_.keys_table)
+}
+
+string map_string::str() {
+	// return 'not impl'
+	if _.entries.len == 0 {
+		return '{}'
+	}
+	// TODO use bytes buffer
+	var s = '{\n'
+	for entry in _.entries {
+		val := _[entry.key]
+		s += '  "$entry.key" => "$val"\n'
+	}
+	s += '}'
+	return s
+}
+/*
+string map_string_str(map_string self) { //fn
+    if (self.entries.len == 0 ) {
+        return c2s("{}") ;
+    }
+     
+    string s=c2s("{\n") ;
+    array_Entry tmp18 = self.entries;
+    for (int tmp19 = 0; tmp19 < tmp18 .len; tmp19 ++) {
+        Entry entry = ((Entry *) tmp18.data)[tmp19];
+		 
+        string tmp20 = c2s(""); bool tmp21 = map_get(self, entry.key, & tmp20);
+        string val=tmp20 ;
+		
+        s = string_add(s, _STR("  \"%.*s\" => \"%.*s\"\n", entry.key.len, entry.key.str, val.len, val.str)) ;
+    }
+    s = string_add(s, c2s("}")) ;
+    return s ;
+}
+*/

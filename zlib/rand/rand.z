@@ -1,0 +1,12 @@
+
+module rand
+
+fn seed(int s) {
+	C.srand(s)
+}
+
+fn next(int max) int {
+	return C.rand() % max
+}
+
+fn C.rand() int 

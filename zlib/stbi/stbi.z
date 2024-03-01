@@ -1,0 +1,64 @@
+
+
+module stbi
+
+import gl
+
+#flag   -I @VROOT/thirdparty/stb_image
+
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
+class Image {
+	int width       
+	int height   
+	int nr_channels 
+	bool ok          
+	*void data   
+	string ext        
+}
+
+import const (
+	GL_RGBA
+	GL_RGB
+	GL_UNSIGNED_BYTE
+	GL_TEXTURE_2D
+	STBI_rgb_alpha
+)
+
+fn load(string path ) Image {
+	ext := path.all_after('.')
+	var res = Image {
+		ok: true
+		ext: ext
+		data: 0
+	}
+	if ext == 'png' {
+		res.data = C.stbi_load(path.str, &res.width, &res.height, &res.nr_channels, STBI_rgb_alpha)
+	}
+	else {
+		res.data = C.stbi_load(path.str, &res.width, &res.height, &res.nr_channels, 0)
+	}
+	if isnil(res.data) {
+		println('stbi cant load')
+		exit(1)
+	}
+	return res
+}
+
+fn (Image img) free() {
+	C.stbi_image_free(img.data)
+}
+
+fn (Image img) tex_image_2d() {
+	var rgb_flag = GL_RGB
+	if img.ext == 'png' {
+		rgb_flag = GL_RGBA
+	}
+	C.glTexImage2D(GL_TEXTURE_2D, 0, rgb_flag, img.width, img.height, 0, rgb_flag, GL_UNSIGNED_BYTE,
+	img.data)
+}
+
+fn set_flip_vertically_on_load(bool val ) {
+	C.stbi_set_flip_vertically_on_load(val)
+}
+

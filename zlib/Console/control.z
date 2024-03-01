@@ -1,0 +1,94 @@
+
+module Console
+
+fn set_cursor_position(int x, int y) {
+    print('\x1b[$y;$x;H')
+}
+
+// n is number of cells
+// direction: A is up / North
+// direction: B is down / South
+// direction: C is forward / East
+// direction: D is backward / West
+fn move(int n, string direction) {
+    print('\x1b[$n$direction')
+}
+
+fn cursor_up(int n) {
+    move(n,'A')
+}
+
+fn cursor_down(int n) {
+    move(n,'B')
+}
+
+fn cursor_forward(int n) {
+    move(n,'C')
+}
+
+fn cursor_back(int n) {
+    move(n,'D')
+}
+
+// type: 0 -> current cursor postion to end of the screen
+// type: 1 -> current cursor postion to beginning of the screen
+// type: 2 -> clears entire screen
+// type: 3 -> clears entire screen and also delete scrollback buffer
+fn erase_display(string t) {
+    print('\x1b[' + t + 'J')
+}
+
+fn erase_toend()
+{
+    erase_display('0')
+}
+
+fn erase_tobeg()
+{
+    erase_display('1')
+}
+
+fn erase_clear()
+{
+    erase_display('2')
+}
+
+fn erase_del_clear()
+{
+    erase_display('3')
+}
+
+// type: 0 -> current cursor postion to end of the line
+// type: 1 -> current cursor postion to beginning of the line
+// type: 2 -> clears entire line
+// Note: Cursor position does not change
+fn erase_line(string t) {
+    print('\x1b[' + t + 'K')
+}
+
+fn erase_line_toend()
+{
+    erase_line('0')
+}
+
+fn erase_line_tobeg()
+{
+    erase_line('1')
+}
+
+fn erase_line_clear()
+{
+    erase_line('2')
+}
+
+// Will make cursor appear if not visible
+fn show_cursor()
+{
+	print('\x1b[?25h')
+}
+
+// Will make cursor invisible
+fn hide_cursor()
+{
+	print('\x1b[?25l')
+}

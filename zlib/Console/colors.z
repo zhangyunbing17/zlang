@@ -1,0 +1,140 @@
+
+module Console //Console
+
+import os
+
+fn win_color() { 
+	ot := C.GetStdHandle(-11)
+	if ot == -1 || !C.SetConsoleMode(ot, 0x0001|0x0004) {   
+		println('操控控制台失败')
+	}
+}
+
+// 
+fn format(string msg, open, close) string {
+	$if windows {
+		win_color()
+	}
+    return '\x1b[' + open + 'm' + msg + '\x1b[' + close + 'm'
+}
+
+// 黑色
+string black(string msg) {
+    return format(msg, '30', '39')
+}
+
+// 蓝色
+fn blue(string msg) string {
+    return format(msg, '34', '39')
+}
+
+// 蓝绿色
+fn cyan(string msg) string {
+    return format(msg, '36', '39')
+}
+
+// 黯淡
+fn dim(string msg) string {
+    return format(msg, '2', '22')
+}
+
+// 绿色
+fn green(string msg) string {
+    return format(msg, '32', '39')
+}
+
+// 灰色
+fn gray(string msg) string {
+    return format(msg, '90', '39')
+}
+
+// 洋红
+fn magenta(string msg) string {
+    return format(msg, '35', '39')
+}
+
+// 红色
+fn red(string msg) string {
+    return format(msg, '31', '39')
+}
+
+// 白色
+fn white(string msg) string {
+    return format(msg, '37', '39')
+}
+
+// 黄色
+fn yellow(string msg) string {
+    return format(msg, '33', '39')
+}
+
+//--------------------------------
+// 隐藏
+fn hidden(string msg) string {
+    return format(msg, '8', '28')
+}
+
+// 反色
+fn inverse(string msg) string {
+    return format(msg, '7', '27')
+}
+
+// 重置
+fn reset(string msg) string {
+    return format(msg, '0', '0')
+}
+
+// 斜线
+fn italic(string msg) string {
+    return format(msg, '3', '23')
+}
+
+// 粗线
+fn bold(string msg) string {
+    return format(msg, '1', '22')
+}
+
+// 删除线
+fn strikethrough(string msg) string {
+    return format(msg, '9', '29')
+}
+
+// 下划线
+fn underline(string msg) string {
+    return format(msg, '4', '24')
+}
+
+//--------------------------------
+
+// 预制
+fn bg_black(string msg) string {
+    return format(msg, '40', '49')
+}
+
+fn bg_blue(string msg) string {
+    return format(msg, '44', '49')
+}
+
+fn bg_cyan(string msg) string {
+    return format(msg, '46', '49')
+}
+
+fn bg_green(string msg) string {
+    return format(msg, '42', '49')
+}
+
+fn bg_magenta(string msg) string {
+    return format(msg, '45', '49')
+}
+
+fn bg_red(string msg) string {
+    return format(msg, '41', '49')
+}
+
+fn bg_white(string msg) string {
+    return format(msg, '47', '49')
+}
+
+fn bg_yellow(string msg) string {
+    return format(msg, '43', '49')
+}

@@ -1,0 +1,86 @@
+
+module builtin
+
+void exit(int code) {
+	C.exit(code)
+}
+
+bool isnil(void* v) {
+	return v == 0
+}
+
+void panic(string s) {
+	println('Z 惶恐: $s') 
+	C.exit(1)
+}
+
+void println(string s) { 
+	if isnil(s.str) {
+		panic('println(NIL)')
+	}
+	C.printf('%.*s\n', s.len, s.str)
+}
+
+void print(string s) {
+	C.printf('%.*s', s.len, s.str)
+}
+
+char* malloc(int n) {
+	if n < 0 {
+		panic('malloc(<0)')
+	}
+ 
+	ptr := C.malloc(n)
+	if isnil(ptr) {
+		panic('malloc($n) 分配内存失败')
+	}
+	return ptr
+}
+
+char* calloc(int n) {
+	if n < 0 {
+		panic('calloc(<0)')
+	}
+	return C.calloc(n, 1)
+}
+
+void free(void* ptr) {
+	C.free(ptr)
+}
+
+[private]
+int _strlen(char* s) {
+	return C.strlen(s)
+}
+
+// 分配大小,并复制值
+[private]
+void* memdup(void* src, int sz) {
+	mem := malloc(sz)
+	return C.memcpy(mem, src, sz)
+}
+
+/*
+void print_backtrace() {
+	return
+	$if mac {
+		buffer := [100]void*
+		nr_ptrs := C.backtrace(buffer, 100)
+		C.backtrace_symbols_fd(buffer, nr_ptrs, 1)
+	}
+}
+
+void eprintln(string s) {
+	if isnil(s.str) {
+		panic('eprintln(NIL)')
+	}
+	$if mac {
+		C.fprintf(stderr, '%.*s\n', s.len, s.str)
+	}
+	$else {
+		println(s)
+	}
+}
+*/
+
+

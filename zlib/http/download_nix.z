@@ -1,0 +1,56 @@
+
+module http
+
+import os
+
+type downloadfn fn (int written)
+type download_finished_fn fn () 
+
+class DownloadStruct { 
+	*void 	stream  
+	int 		written 
+	downloadfn 	cb      
+}
+
+[private]
+fn download_cb(void* ptr, size_t size, nmemb, void* userp) int {
+	var data = &DownloadStruct(userp)
+	written := C.fwrite(ptr, size, nmemb, data.stream) 
+	data.written += written 
+	#data->cb(data->written); // TODO 
+	return written 
+}
+
+[private]
+fn download_file_with_progress(string url, out , downloadfn cb, download_finished_fn cb_finished) {   
+	curl := C.curl_easy_init()
+	if isnil(curl) {
+		return
+	}
+	cout := out.cstr() 
+	fp := C.fopen(cout, 'wb') 
+	C.curl_easy_setopt(curl, CURLOPT_URL, url.cstr()) 
+	C.curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, download_cb)
+	data := &DownloadStruct {
+		stream:fp
+		cb: cb
+	}
+	C.curl_easy_setopt(curl, CURLOPT_WRITEDATA, data) 
+	var d = 0.0 
+	C.curl_easy_getinfo(curl, CURLINFO_CONTENT_LENGTH_DOWNLOAD, &d) 
+	C.curl_easy_perform(curl) 
+	C.curl_easy_cleanup(curl) 
+	C.fclose(fp) 
+	#cb_finished(); // TODO 
+}
+
+[private]
+fn download_file(string url, out) {
+	download_file_with_progress(url, out, empty, empty) 
+}
+
+[private]
+fn empty() {
+ 
+} 
+

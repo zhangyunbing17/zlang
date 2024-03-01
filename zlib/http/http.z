@@ -1,0 +1,91 @@
+
+module http
+
+class Request {
+//pub:
+	//[]string headers  
+	map_string 	headers  
+	string 		method   
+	//map[string]string cookies 
+	string 		h 
+	string 		cmd 
+	string 		typ // GET POST
+	string 		data 
+	string 		url 
+	*void 	ws_func  
+	*void 	user_ptr
+	bool 		verbose
+}
+
+class Response {
+//pub:
+	string 		body        
+	map_string	headers     
+	int			status_code 
+}
+
+// embed 'http'
+fn get(string url) string {
+	if url == '' {
+		println('http: empty get url')
+		return ''
+	}
+	var req = new_request('GET', url, '')
+	resp := req.do()
+	return resp.body
+}
+
+fn post(string url, data) string {
+	req := new_request('POST', url, data)
+	resp := req.do()
+	return resp.body
+}
+
+fn new_request(string typ, _url, _data) *Request {
+	var url = _url
+	var data = _data
+	// req.headers['User-Agent'] = 'V $VERSION'
+	if typ == 'GET' && !url.contains('?') && data != '' {
+		println('zeroing data, to url')
+		url = '$url?$data'
+		data = ''
+	}
+	// req.headers = new_map(0, sizeof(string))// []string{}
+	return &Request {
+		typ: typ
+		url: _url
+		data: _data
+		ws_func: 0
+		user_ptr: 0
+		headers: map[string]string{} 
+	}
+}
+
+/* 
+fn (req &Request) do() Response {
+	var resp = Response{}
+	return resp
+}
+*/
+fn (Request *req) free() {
+	req.headers.free()
+}
+
+fn (Response *resp) free() {
+	resp.headers.free()
+}
+
+fn (Request *req) add_header(string key, val) {
+	// println('start add header')
+	// println('add header "$key" "$val"')
+	// println(key)
+	// println(val)
+	// h := '$key: $val'
+	// println('SET H')
+	// req.headers << h
+	req.headers[key] = val
+	// var h = req.h
+	// h += ' -H "${key}: ${val}" '
+	// req.h = h
+}
+

@@ -1,0 +1,144 @@
+
+module json
+
+#flag -I @VROOT/thirdparty/cJSON
+#flag @VROOT/thirdparty/cJSON/cJSON.o 
+#include "cJSON.h"
+
+/*
+struct C.cJSON {
+	valueint    int
+	valuedouble f32 
+	valuestring byteptr
+}
+*/
+
+class C.cJSON {
+	int 	valueint    
+	f32 	valuedouble  
+	byteptr valuestring 
+}
+
+fn jsdecode_int(C.cJSON& root) int {
+	if isnil(root) {
+		return 0
+	}
+	return root.valueint
+}
+
+fn jsdecode_i8(C.cJSON& root) i8 {
+	if isnil(root) {
+		return i8(0)
+	}
+	return i8(root.valueint)
+}
+
+fn jsdecode_i16(C.cJSON& root) i16 {
+	if isnil(root) {
+		return i16(0)
+	}
+	return i16(root.valueint)
+}
+
+fn jsdecode_i32(C.cJSON& root) i32 {
+	if isnil(root) {
+		return i32(0)
+	}
+	return i32(root.valueint)
+}
+
+fn jsdecode_i64(C.cJSON& root) i64 {
+	if isnil(root) {
+		return i64(0)
+	}
+	return i64(root.valuedouble) //i64 is double in C
+}
+
+fn jsdecode_f32(C.cJSON& root) f32 {
+	if isnil(root) {
+		return f32(0)
+	}
+	return f32(root.valuedouble)
+}
+
+fn jsdecode_f64(C.cJSON& root) f64 {
+	if isnil(root) {
+		return f64(0)
+	}
+	return f64(root.valuedouble)
+}
+
+
+fn jsdecode_string(C.cJSON& root) string {
+	if isnil(root) {
+		return ''
+	}
+	if isnil(root.valuestring) {
+		return ''
+	}
+	// println('jsdecode string valuestring="$root.valuestring"')
+	// return tos(root.valuestring, _strlen(root.valuestring))
+	return tos_clone(root.valuestring)// , _strlen(root.valuestring))
+}
+
+fn jsdecode_bool(C.cJSON& root) bool {
+	if isnil(root) {
+		return false
+	}
+	return C.cJSON_IsTrue(root)
+}
+
+// ///////////////////
+fn jsencode_int(int val) *C.cJSON {
+	return C.cJSON_CreateNumber(val)
+}
+
+fn jsencode_i8(i8 val) *C.cJSON {
+	return C.cJSON_CreateNumber(val)
+}
+
+fn jsencode_i16(i16 val) *C.cJSON {
+	return C.cJSON_CreateNumber(val)
+}
+fn jsencode_i32(i32 val) *C.cJSON {
+	return C.cJSON_CreateNumber(val)
+}
+
+fn jsencode_i64(i64 val) *C.cJSON {
+	return C.cJSON_CreateNumber(val)
+}
+
+fn jsencode_f32(f32 val) *C.cJSON {
+	return C.cJSON_CreateNumber(val)
+}
+
+fn jsencode_f64(f64 val) *C.cJSON {
+	return C.cJSON_CreateNumber(val)
+}
+
+fn jsencode_bool(bool val) *C.cJSON {
+	return C.cJSON_CreateBool(val)
+}
+
+fn jsencode_string(string val) *C.cJSON {
+	clone := val.clone()
+	return C.cJSON_CreateString(clone.str)
+	// return C.cJSON_CreateString2(val.str, val.len)
+}
+
+// ///////////////////////
+// user := decode_User(json_parse(js_string_var))
+fn json_parse(string s) *C.cJSON {
+	return C.cJSON_Parse(s.str)
+}
+
+// json_string := json_print(encode_User(user))
+fn json_print(C.cJSON& json) string {
+	s := C.cJSON_PrintUnformatted(json)
+	return tos(s, C.strlen(s))
+}
+
+// /  cjson wrappers
+// fn json_array_for_each(C.cJSON& val, root) {
+// #cJSON_ArrayForEach (val ,root)
+// }

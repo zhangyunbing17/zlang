@@ -1,0 +1,302 @@
+
+module math
+
+
+// NOTE
+// When adding a new function, please make sure it's in the right place.
+// All functions are sorted alphabetically.
+
+const (
+	E   = 2.71828182845904523536028747135266249775724709369995957496696763
+	Pi  = 3.14159265358979323846264338327950288419716939937510582097494459
+	Phi = 1.61803398874989484820458683436563811772030917980576286213544862
+	Tau = 6.28318530717958647692528676655900576839433879875021164194988918
+
+	Sqrt2   = 1.41421356237309504880168872420969807856967187537694807317667974
+	SqrtE   = 1.64872127070012814684865078781416357165377610071014801157507931
+	SqrtPi  = 1.77245385090551602729816748334114518279754945612238712821380779
+	SqrtTau = 2.50662827463100050241576528481104525300698674060993831662992357
+	SqrtPhi = 1.27201964951406896425242246173749149171560804184009624861664038
+
+	Ln2    = 0.693147180559945309417232121458176568075500134360255254120680009
+	Log2E  = 1.0 / Ln2
+	Ln10   = 2.30258509299404568401799145468436420760110148862877297603332790
+	Log10E = 1.0 / Ln10
+)
+
+const (
+        MaxI8   = (1<<7) - 1
+        MinI8   = -1 << 7
+        MaxI16  = (1<<15) - 1
+        MinI16  = -1 << 15
+        MaxI32  = (1<<31) - 1
+        MinI32  = -1 << 31
+//        MaxI64  = ((1<<63) - 1)
+//        MinI64  = (-(1 << 63) )
+        MaxU8  = (1<<8) - 1
+        MaxU16 = (1<<16) - 1
+        MaxU32 = (1<<32) - 1
+        MaxU64 = (1<<64) - 1
+)
+
+// Returns the absolute value.
+fn abs(f64 a) f64 {
+	if a < 0 {
+		return -a
+	}
+	return a
+}
+
+// acos calculates inversed cosine (arccosine).
+fn acos(f64 a) f64 {
+	return C.acos(a)
+}
+
+// asin calculates inversed sine (arcsine).
+fn asin(f64 a) f64 {
+	return C.asin(a)
+}
+
+// atan calculates inversed tangent (arctangent).
+fn atan(f64 a) f64 {
+	return C.atan(a)
+}
+
+// atan2 calculates inversed tangent with two arguments, returns angle between the X axis and the point.
+fn atan2(f64 a, b) f64 {
+	return C.atan2(a, b)
+}
+
+// cbrt calculates cubic root.
+fn cbrt(f64 a) f64 {
+	return C.cbrt(a)
+}
+
+// ceil returns the nearest integer greater or equal to the provided value.
+fn ceil(f64 a) int {
+	return C.ceil(a)
+}
+
+// cos calculates cosine.
+fn cos(f64 a) f64 {
+	return C.cos(a)
+}
+
+// cosh calculates hyperbolic cosine.
+fn cosh(f64 a) f64 {
+	return C.cosh(a)
+}
+
+// degrees convert from degrees to radians.
+fn degrees(f64 radians) f64 {
+	return radians * (180.0 / Pi)
+}
+
+// exp calculates exponement of the number (math.pow(math.E, a)).
+fn exp(f64 a) f64 {
+	return C.exp(a)
+}
+
+// digits returns an array of the digits of n in the given base.
+fn digits(int n, base) []int {
+	var sign = 1
+	if n < 0 {
+		sign = -1
+		n = -n
+	}
+	var res = []int
+	for n != 0 {
+		res << (n % base) * sign
+		n /= base
+	}
+	return res
+}
+
+// erf computes the error funtion value
+fn erf(f64 a) f64 {
+	return C.erf(a)
+}
+
+// erfc computes the complimentary error function value
+fn erfc(f64 a) f64 {
+	return C.erfc(a)
+}
+
+// exp2 returns the base-2 exponential function of a (math.pow(2, a)).
+fn exp2(f64 a) f64 {
+	return C.exp2(a)
+}
+
+// factorial calculates the factorial of the provided value.
+[private]
+fn recursive_product( int n, &int current_number_ptr) int{
+    var m = n / 2
+    if (m == 0){
+        return *current_number_ptr += 2
+    }
+    if (n == 2){
+        return (*current_number_ptr += 2) * (*current_number_ptr += 2)
+    }
+    return recursive_product((n - m), *current_number_ptr) * recursive_product(m, *current_number_ptr)
+}
+
+fn factorial(int n) i64 {
+    if n < 0 {
+        panic('factorial: Cannot find factorial of negative number')
+    }
+    if n < 2 {
+        return i64(1)
+    }
+    var r = 1
+    var p = 1
+    var current_number = 1
+    var h = 0
+    var shift = 0
+    var high = 1
+    var len = high
+    var log2n = int(floor(log2(n)))
+    for ;h != n; {
+        shift += h
+        h = n >> log2n
+        log2n -= 1
+        len = high
+        high = (h - 1) | 1
+        len = (high - len)/2
+        if (len > 0){
+            p *= recursive_product(len, &current_number)
+            r *= p
+        }
+    }
+    return i64((r << shift))
+}
+
+// floor returns the nearest integer lower or equal of the provided value.
+fn floor(f64 a) f64 {
+	return C.floor(a)
+}
+
+// fmod returns the floating-point remainder of number / denom (rounded towards zero):
+fn fmod(f64 a, b) f64 {
+	return C.fmod(a, b)
+}
+
+// gamma computes the gamma function value
+fn gamma(f64 a) f64 {
+	return C.tgamma(a)
+}
+
+// gcd calculates greatest common (positive) divisor (or zero if a and b are both zero).
+fn gcd(i64 a, b) i64 {
+	if a < 0 {
+		a = -a
+	}
+	if b < 0 {
+		b = -b
+	}
+	for b != 0 {
+		a %= b
+		if a == 0 {
+			return b
+		}
+		b %= a
+	}
+	return a
+}
+
+// lcm calculates least common (non-negative) multiple.
+fn lcm(i64 a, b) i64 {
+	if a == 0 {
+		return a
+	}
+	res := a * (b / gcd(b, a))
+	if res < 0 {
+		return -res
+	}
+	return res
+}
+
+// log calculates natural (base-e) logarithm of the provided value.
+fn log(f64 a) f64 {
+	return C.log(a)
+}
+
+// log2 calculates base-2 logarithm of the provided value.
+fn log2(f64 a) f64 {
+	return C.log2(a)
+}
+
+// log10 calculates the common (base-10) logarithm of the provided value.
+fn log10(f64 a) f64 {
+	return C.log10(a)
+}
+
+// log_gamma computes the log-gamma function value
+fn log_gamma(f64 a) f64 {
+	return C.lgamma(a)
+}
+
+// log_n calculates base-N logarithm of the provided value.
+fn log_n(f64 a, b) f64 {
+	return C.log(a) / C.log(b)
+}
+
+// max returns the maximum value of the two provided.
+fn max(f64 a, b) f64 {
+	if a > b {
+		return a
+	}
+	return b
+}
+
+// min returns the minimum value of the two provided.
+fn min(f64 a, b) f64 {
+	if a < b {
+		return a
+	}
+	return b
+}
+
+// pow returns base raised to the provided power.
+fn pow(f64 a, b) f64 {
+	return C.pow(a, b)
+}
+
+// radians convert from radians to degrees.
+fn radians(f64 degrees) f64 {
+	return degrees * (Pi / 180.0)
+}
+
+// round returns the integer nearest to the provided value.
+fn round(f64 f) f64 {
+	return C.round(f)
+}
+
+// sin calculates sine.
+fn sin(f64 a) f64 {
+	return C.sin(a)
+}
+
+// sinh calculates hyperbolic sine.
+fn sinh(f64 a) f64 {
+	return C.sinh(a)
+}
+
+// sqrt calculates square-root of the provided value.
+fn sqrt(f64 a) f64 {
+	return C.sqrt(a)
+}
+// tan calculates tangent.
+fn tan(f64 a) f64 {
+	return C.tan(a)
+}
+
+// tanh calculates hyperbolic tangent.
+fn tanh(f64 a) f64 {
+	return C.tanh(a)
+}
+
+// trunc rounds a toward zero, returning the nearest integral value that is not
+// larger in magnitude than a.
+fn trunc(f64 a) f64 {
+	return C.trunc(a)
+}

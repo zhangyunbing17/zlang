@@ -1,0 +1,109 @@
+
+module fractions
+
+import math
+/*
+// Fraction Struct
+struct Fraction {
+	n i64
+	d i64
+}
+*/
+
+class Fraction {
+	i64 n
+	i64 d
+}
+
+// A factory function for creating a Fraction, adds a boundary condition
+fn fraction(i64 n, i64 d) Fraction{
+	if d != 0 {
+		return Fraction{n, d}
+	} 
+	else {
+		panic('Denominator cannot be zero')
+	}
+}
+
+// To String method
+fn (Fraction f) str() string { 
+	return '$f.n/$f.d' 
+}
+
+// Fraction add using operator overloading
+fn (Fraction f1) + (Fraction f2) Fraction {
+	if f1.d == f2.d {
+		return Fraction{f1.n + f2.n, f1.d}
+	}
+	else {
+		return Fraction{(f1.n * f2.d) + (f2.n * f1.d), f1.d * f2.d}
+	}
+}
+
+// Fraction subtract using operator overloading
+fn (Fraction f1) - (Fraction f2) Fraction {
+	if f1.d == f2.d {
+		return Fraction{f1.n - f2.n, f1.d}
+	}
+	else {
+		return Fraction{(f1.n * f2.d) - (f2.n * f1.d), f1.d * f2.d}
+	}
+}
+
+// Fraction multiply using operator overloading
+// fn (Fraction f1) * (Fraction f2) Fraction {
+// 	return Fraction{f1.n * f2.n,f1.d * f2.d}
+// }
+
+// Fraction divide using operator overloading
+// fn (Fraction f1) / (Fraction f2) Fraction {
+// 	return Fraction{f1.n * f2.d,f1.d * f2.n}
+// }
+
+// Fraction add method
+fn (Fraction f1) add(Fraction f2) Fraction {
+	return f1 + f2
+}
+
+// Fraction subtract method
+fn (Fraction f1) subtract(Fraction f2) Fraction {
+	return f1 - f2
+}
+
+// Fraction multiply method
+fn (Fraction f1) multiply(Fraction f2) Fraction {
+	return Fraction{f1.n * f2.n, f1.d * f2.d}
+}
+
+// Fraction divide method
+fn (Fraction f1) divide(Fraction f2) Fraction {
+	return Fraction{f1.n * f2.d, f1.d * f2.n}
+}
+
+// Fraction reciprocal method
+fn (Fraction f1) reciprocal() Fraction {
+	return Fraction{f1.d, f1.n}
+}
+
+// Fraction method which gives greatest common divisor of numerator and denominator
+fn (Fraction f1) gcd() i64 {
+	return math.gcd(f1.n, f1.d)
+}
+
+// Fraction method which reduces the fraction
+fn (Fraction f1) reduce() Fraction {
+	cf := f1.gcd()
+	return Fraction{f1.n / cf, f1.d / cf}
+}
+
+// Converts Fraction to decimal
+fn (Fraction f1) f64() f64 {
+	return f64(f1.n) / f64(f1.d)
+}
+
+// Compares two Fractions
+fn (Fraction f1) equals(Fraction f2) bool {
+	r1 := f1.reduce()
+	r2 := f2.reduce()
+	return (r1.n == r2.n) && (r1.d == r2.d)
+}

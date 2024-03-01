@@ -1,0 +1,30 @@
+
+module builtin
+
+class Option {
+let:
+	[255]char 	data
+	string 		error
+	bool 		ok
+}
+
+Option opt_ok(void* data, int size) {
+	if size > 255 {
+		panic('选项最大255: $size') 
+	} 
+	
+	res := Option { 
+		ok: true
+	}
+	C.memcpy(res.data, data, size) 
+	return res 
+} 
+
+Option error(string s) {
+	return Option {
+		error: s
+		//ok: 	false
+	}
+}
+
+
